@@ -27,6 +27,12 @@ class FeedStory:
         self.item = item
         self.title = html.unescape(self.item.find('title').text)
         self.byline = html.unescape(self.item.find('dc:creator', ns).text)
+        self.pubdate = none
+        self.lede_photo = none
+        self.status = 'unpublished'
+        self.abstract = none
+        self.content = none
+        self.lede_photo = none
 
     category = 1170
 
@@ -51,10 +57,8 @@ class FeedStory:
         td = timedelta(hours=-6)
         pubdate_object = datetime.strptime(pubdate_raw, "%a, %d %b %Y %H:%M:%S %Z")
         pubdate_local = pubdate_object + td
-        pubdate_clean = pubdate_local.strftime("%Y%m%d")
-        pubtime_clean = pubdate_local.strftime("%H%M")
-        pubtime_string = pubdate_clean + 'T' + pubtime_clean
-        self.pubdate = pubtime_string
+        pubdate_clean = pubdate_local.strftime("%Y%m%d") + 'T' + pubdate_local.strftime("%H%M")
+        self.pubdate = pubdate_clean
 
     def get_abstract(self):
         abstract_raw = self.item.find('description').text
@@ -66,9 +70,9 @@ class FeedStory:
         abstract_start = content_escaped.find(self.abstract)
         if abstract_start != -1:
             abstract_end = len(self.abstract) + 4
-            return content_escaped[abstract_end:]
+            self.content = content_escaped[abstract_end:]
         else:
-            return content_escaped
+            self.content = content_escaped
 
     def capture_photo(self):
         lede_photo_raw = self.item.find('enclosure')
@@ -82,20 +86,19 @@ class FeedStory:
                     for chunk in lede_photo_image_raw:
                         lede_photo_image_file.write(chunk)
                     lede_photo_image_file.close()
-                #get dimensions for photo via pil.image
+                # get dimensions for photo via pil.image
                 lede_photo = Image.open(file_loc)
                 lede_photo_width = lede_photo.width
                 lede_photo_height = lede_photo.height
                 lede_photo.close()
-                #directory/location where img will be uploaded
+                # directory/location where img will be uploaded
                 import_directory = "/imports/adg/photos/"
                 photo_loc = import_directory + file_name
-                #info to return for use in story file
-                self.lede_photo = [file_name, photo_loc, lede_photo_width, lede_photo_height]
-                #todo - ftp photos to import directory on ftp
+                # info to return for use in story file
+                self.lede_photo = {'file': file_name, 'location': photo_loc, 'width': lede_photo_width, 'height': lede_photo_height}
+                # todo - ftp photos to import directory on ftp
             else:
                 pass
-
 
     def write_xml(self):
         out_root = ET.Element('nitf')
@@ -105,10 +108,10 @@ class FeedStory:
         out_title.text = self.title
         out_docdata = ET.SubElement(out_head, 'docdata')
         out_pubdate = ET.SubElement(out_head, 'date.release', {'norm':self.pubdate})
-        #out_date_release = ET.SubElement(out_docdata, 'date.release')
-        #out_date_release.norm = self.pubdate
+        # out_date_release = ET.SubElement(out_docdata, 'date.release')
+        # out_date_release.norm = self.pubdate
         out_tobject = ET.SubElement(out_head, 'tobject', {'tobject.type':'news'})
-        #out_tobject.set('tobject.type', 'news')
+        # out_tobject.set('tobject.type', 'news')
         out_subject = ET.SubElement(out_tobject, 'tobject.subject', {'toobject.subject.type': str(self.category)})
         out_pubdata = ET.SubElement(out_head, 'pubdata', {'type':'print', 'date.publication':self.pubdate, 'name': 'Arkansas Democrat Gazette', 'position.section':'A Section'})
         out_body = ET.Element('body')
@@ -120,7 +123,15 @@ class FeedStory:
         out_byline = ET.SubElement(out_body, 'byline')
         out_byline_person = ET.SubElement(out_byline, 'person')
         out_byline_byttl = ET.SubElement(out_byline, 'byttl', {'text': self.byline})
+        out_abstract = ET.SubElement(out_body_head, 'abstract', {'text': self.abstract})
+        if self.lede_photo:
+            m = '<media media-type="image">\n'
+            mr = '<media-reference mime-type="image/jpeg" source=' + self.lede_photo["location"] + ' height=' + self.lede_photo["height"] + ' width=' + self.lede_photo["width"] + '/>\n'
+            mc = '</media>\n'
+            self.content = self.content + m + mr + mc
+        out_content = ET.SubElement(out_body, "body.content", {'text': self.content})
         ET.dump(out_root)
+
 
 def get_feed(FEED_URL):
     r = requests.get(FEED_URL)
@@ -156,11 +167,8 @@ def get_feed(FEED_URL):
             lede_photo = capture_photo(item, pubdate)
             write_guid('feeds.db', 'stories', 'url', guid)'''
 
-def write_xml(story):
-    pass
 
-
-f = open('/Users/aidianholder/src/rss_import/feed.xml', 'r')
+f = open('/Users/aidianholder/Documents/src/rss_import/feed.xml', 'r')
 tree = ET.fromstring(f.read())
 items = tree.findall('./channel/item')
 item = items[0]
@@ -173,6 +181,7 @@ if story.status == 'unpublished':
     story.main_content()
     story.capture_photo()
     story.write_xml()
+
 
 
 
