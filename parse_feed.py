@@ -27,12 +27,12 @@ class FeedStory:
         self.item = item
         self.title = html.unescape(self.item.find('title').text)
         self.byline = html.unescape(self.item.find('dc:creator', ns).text)
-        self.pubdate = none
-        self.lede_photo = none
+        self.pubdate = None
+        self.lede_photo = None
         self.status = 'unpublished'
-        self.abstract = none
-        self.content = none
-        self.lede_photo = none
+        self.abstract = None
+        self.content = None
+        self.lede_photo = None
 
     category = 1170
 
@@ -81,7 +81,7 @@ class FeedStory:
             if lede_photo_image_raw.status_code == 200:
                 file_name = lede_photo_raw.attrib['url'].split('/')[-1:]
                 file_name = self.pubdate + file_name[0]
-                file_loc = '/Users/aidianholder/src/rss_import/' + file_name
+                file_loc = '/Users/aholder/Documents/src/rss_import/' + file_name
                 with open(file_loc, 'wb') as lede_photo_image_file:
                     for chunk in lede_photo_image_raw:
                         lede_photo_image_file.write(chunk)
@@ -126,11 +126,15 @@ class FeedStory:
         out_abstract = ET.SubElement(out_body_head, 'abstract', {'text': self.abstract})
         if self.lede_photo:
             m = '<media media-type="image">\n'
-            mr = '<media-reference mime-type="image/jpeg" source=' + self.lede_photo["location"] + ' height=' + self.lede_photo["height"] + ' width=' + self.lede_photo["width"] + '/>\n'
+            mr = '<media-reference mime-type="image/jpeg" source=' + self.lede_photo["location"] + ' height=' + str(self.lede_photo["height"]) + ' width=' + str(self.lede_photo["width"]) + '/>\n'
             mc = '</media>\n'
             self.content = self.content + m + mr + mc
-        out_content = ET.SubElement(out_body, "body.content", {'text': self.content})
-        ET.dump(out_root)
+        out_contegit nt = ET.SubElement(out_body, "body.content", {'text': self.content})
+        ET.indent(out_root)
+        o = open('out_test', 'w')
+        string_out = str(ET.tostring(out_root))
+        o.write(string_out)
+        o.close()
 
 
 def get_feed(FEED_URL):
@@ -168,7 +172,7 @@ def get_feed(FEED_URL):
             write_guid('feeds.db', 'stories', 'url', guid)'''
 
 
-f = open('/Users/aidianholder/Documents/src/rss_import/feed.xml', 'r')
+f = open('/Users/aholder/Documents/src/rss_import/feed.xml', 'r')
 tree = ET.fromstring(f.read())
 items = tree.findall('./channel/item')
 item = items[0]
