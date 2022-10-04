@@ -25,8 +25,8 @@ class FeedStory:
 
         self.guid = guid
         self.item = item
-        self.title = self.item.find('title').text
-        self.byline = self.item.find('dc:creator', ns).text
+        self.title = html.unescape(self.item.find('title').text)
+        self.byline = html.unescape(self.item.find('dc:creator', ns).text)
 
     category = 1170
 
@@ -36,9 +36,9 @@ class FeedStory:
         old_stories = cur.execute("SELECT url FROM stories")
         old_guids = old_stories.fetchall()
         if self.guid not in old_guids:
-            self.status = 'unpublished'
+            return 'unpublished'
         else:
-            self.status = 'published'
+            return 'published'
 
     '''def get_title(self):
         return self.item.find('title').text
@@ -53,7 +53,7 @@ class FeedStory:
         pubdate_local = pubdate_object + td
         pubdate_clean = pubdate_local.strftime("%Y%m%d")
         pubtime_clean = pubdate_local.strftime("%H%M")
-        pubtime_string = pubdate_clean + pubtime_clean
+        pubtime_string = pubdate_clean + 'T' + pubtime_clean
         self.pubdate = pubtime_string
 
     def get_abstract(self):
@@ -96,6 +96,31 @@ class FeedStory:
             else:
                 pass
 
+
+    def write_xml(self):
+        out_root = ET.Element('nitf')
+        out_head = ET.Element('head')
+        out_root.append(out_head)
+        out_title = ET.SubElement(out_head, 'title')
+        out_title.text = self.title
+        out_docdata = ET.SubElement(out_head, 'docdata')
+        out_pubdate = ET.SubElement(out_head, 'date.release', {'norm':self.pubdate})
+        #out_date_release = ET.SubElement(out_docdata, 'date.release')
+        #out_date_release.norm = self.pubdate
+        out_tobject = ET.SubElement(out_head, 'tobject', {'tobject.type':'news'})
+        #out_tobject.set('tobject.type', 'news')
+        out_subject = ET.SubElement(out_tobject, 'tobject.subject', {'toobject.subject.type': str(self.category)})
+        out_pubdata = ET.SubElement(out_head, 'pubdata', {'type':'print', 'date.publication':self.pubdate, 'name': 'Arkansas Democrat Gazette', 'position.section':'A Section'})
+        out_body = ET.Element('body')
+        out_root.append(out_body)
+        out_body_head = ET.SubElement(out_body, 'body.head')
+        out_headline = ET.SubElement(out_body_head, 'headline')
+        out_hl1 = ET.SubElement(out_headline, 'h11', {'text':self.title})
+        out_hl2 = ET.SubElement(out_headline, 'hl2', {'text': self.abstract})
+        out_byline = ET.SubElement(out_body, 'byline')
+        out_byline_person = ET.SubElement(out_byline, 'person')
+        out_byline_byttl = ET.SubElement(out_byline, 'byttl', {'text': self.byline})
+        ET.dump(out_root)
 
 def get_feed(FEED_URL):
     r = requests.get(FEED_URL)
@@ -141,11 +166,14 @@ items = tree.findall('./channel/item')
 item = items[0]
 guid = item.find('guid').text
 story = FeedStory(guid, item)
-story.process_pubdate()
-story.get_abstract()
-story.main_content()
-story.capture_photo()
-print(dir(story))
+story.status = 'unpublished'
+if story.status == 'unpublished':
+    story.process_pubdate()
+    story.get_abstract()
+    story.main_content()
+    story.capture_photo()
+    story.write_xml()
+
 
 
 
