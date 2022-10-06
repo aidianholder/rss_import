@@ -1,11 +1,13 @@
 import os
 import requests
+# from lxml import etree as ET
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import sqlite3
 import html
 from PIL import Image
-
+from xml.dom import minidom
+import re
 
 FEED_SHORT = "SI"
 FEED_ID = {"SI": "https://www.si.com/.rss/full"}
@@ -25,8 +27,8 @@ class FeedStory:
 
         self.guid = guid
         self.item = item
-        self.title = html.unescape(self.item.find('title').text)
-        self.byline = html.unescape(self.item.find('dc:creator', ns).text)
+        self.title = self.item.find('title').text
+        self.byline = self.item.find('dc:creator', ns).text
         self.pubdate = None
         self.lede_photo = None
         self.status = 'unpublished'
@@ -66,7 +68,7 @@ class FeedStory:
 
     def main_content(self):
         content_raw = self.item.find('content:encoded', ns)
-        content_escaped = html.unescape(content_raw.text)
+        content_escaped =  content_raw.text
         abstract_start = content_escaped.find(self.abstract)
         if abstract_start != -1:
             abstract_end = len(self.abstract) + 4
@@ -81,7 +83,7 @@ class FeedStory:
             if lede_photo_image_raw.status_code == 200:
                 file_name = lede_photo_raw.attrib['url'].split('/')[-1:]
                 file_name = self.pubdate + file_name[0]
-                file_loc = '/Users/aholder/Documents/src/rss_import/' + file_name
+                file_loc = '/Users/aidianholder/src/rss_import/' + file_name
                 with open(file_loc, 'wb') as lede_photo_image_file:
                     for chunk in lede_photo_image_raw:
                         lede_photo_image_file.write(chunk)
@@ -105,7 +107,7 @@ class FeedStory:
         out_head = ET.Element('head')
         out_root.append(out_head)
         out_title = ET.SubElement(out_head, 'title')
-        out_title.text = self.title
+        out_title.text =  (self.title)
         out_docdata = ET.SubElement(out_head, 'docdata')
         out_pubdate = ET.SubElement(out_head, 'date.release', {'norm':self.pubdate})
         # out_date_release = ET.SubElement(out_docdata, 'date.release')
@@ -118,23 +120,32 @@ class FeedStory:
         out_root.append(out_body)
         out_body_head = ET.SubElement(out_body, 'body.head')
         out_headline = ET.SubElement(out_body_head, 'headline')
-        out_hl1 = ET.SubElement(out_headline, 'h11', {'text':self.title})
-        out_hl2 = ET.SubElement(out_headline, 'hl2', {'text': self.abstract})
+        out_hl1 = ET.SubElement(out_headline, 'h11', {'text':  self.title  })
+        out_hl2 = ET.SubElement(out_headline, 'hl2', {'text':  self.abstract })
         out_byline = ET.SubElement(out_body, 'byline')
         out_byline_person = ET.SubElement(out_byline, 'person')
-        out_byline_byttl = ET.SubElement(out_byline, 'byttl', {'text': self.byline})
-        out_abstract = ET.SubElement(out_body_head, 'abstract', {'text': self.abstract})
+        out_byline_byttl = ET.SubElement(out_byline, 'byttl', {'text':  self.byline })
+        out_abstract = ET.SubElement(out_body_head, 'abstract', {'text':  self.abstract })
         if self.lede_photo:
             m = '<media media-type="image">\n'
             mr = '<media-reference mime-type="image/jpeg" source=' + self.lede_photo["location"] + ' height=' + str(self.lede_photo["height"]) + ' width=' + str(self.lede_photo["width"]) + '/>\n'
             mc = '</media>\n'
             self.content = self.content + m + mr + mc
-        out_contegit nt = ET.SubElement(out_body, "body.content", {'text': self.content})
-        ET.indent(out_root)
-        o = open('out_test', 'w')
-        string_out = str(ET.tostring(out_root))
-        o.write(string_out)
-        o.close()
+        out_contet = ET.SubElement(out_body, "body.content", {'text': self.content  })
+        xs = ET.tostring(out_root, 'utf-8')
+        xsr = minidom.parseString(xs)
+        xsrp = xsr.toprettyxml(indent="  ")
+        # r = re.compile('&lt;')
+        # print(r.findall(xsrp))
+        # xsrp.replace("&lt;!", "<!")
+        print(type(xsrp))
+        print(xsrp)
+
+    '''with open('out_test.xml', 'w') as f:
+            xs = xs.decode("utf-8")
+            f.write(xs)
+            print(xs)
+        f.close()'''
 
 
 def get_feed(FEED_URL):
@@ -172,8 +183,9 @@ def get_feed(FEED_URL):
             write_guid('feeds.db', 'stories', 'url', guid)'''
 
 
-f = open('/Users/aholder/Documents/src/rss_import/feed.xml', 'r')
-tree = ET.fromstring(f.read())
+#f = open('/Users/aidianholder/src/rss_import/feed.xml', 'r')
+#tree = ET.fromstring(f.read())
+tree = ET.parse('/Users/aidianholder/src/rss_import/feed.xml')
 items = tree.findall('./channel/item')
 item = items[0]
 guid = item.find('guid').text
