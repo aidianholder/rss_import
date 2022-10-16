@@ -1,19 +1,17 @@
 import os
 import requests
-# from lxml import etree as ET
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import sqlite3
 import html
 from PIL import Image
-# from xml.dom import minidom
 import re
 from ftplib import FTP
 
 FEED_SHORT = "BETS"
 FEED_ID = {"SI": "https://www.si.com/.rss/full", "BETS": "https://www.si.com/.rss/full/betting"}
 FEED_URL = FEED_ID[FEED_SHORT]
-DIR_NAME = os.getcwd()  # path.expanduser("~/src/rss_import/")
+DIR_NAME = os.getcwd()
 DBNAME = 'feeds.db'
 TABLE_NAME = "stories"
 PUNCTUATION = re.compile("[:&',/]")
@@ -51,12 +49,6 @@ class FeedStory:
         byline_element = self.item.find('dc:creator', ns)
         if byline_element is not None:
             self.byline = byline_element.text
-            '''try:
-                split_byline = self.byline.split(" ")
-                self.given = split_byline[0]
-                self.family = split_byline[1]
-            except:
-                pass'''
         else:
             self.byline = None
 
@@ -109,7 +101,6 @@ class FeedStory:
                 file_name = lede_photo_raw.attrib['url'].split('/')[-1:]
                 file_name = self.pubdate + file_name[0] + '.jpg'
                 file_loc = os.getcwd() + '/photos/' + file_name
-                # file_loc = '/Users/aidianholder/src/rss_import/photos' + file_name
                 # download it a chunk at a time
                 with open(file_loc, 'wb') as lede_photo_image_file:
                     for chunk in lede_photo_image_raw:
@@ -120,7 +111,7 @@ class FeedStory:
                 lede_photo_width = lede_photo.width
                 lede_photo_height = lede_photo.height
                 lede_photo.close()
-                # directory/location where img will be uploaded
+                # directory/location where img will be uploaded on ellington ftp
                 import_directory = "/imports/adg/photos/"
                 photo_loc = import_directory + file_name
                 # info to return for use in story file
@@ -231,7 +222,3 @@ for item in items:
         story.write_xml()
         write_guid('feeds.db', story.guid)
 sendfiles()
-
-
-
-
