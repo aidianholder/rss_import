@@ -125,7 +125,7 @@ class FeedStory:
         out.write('<?xml version="1.0"?>\n')
         out.write('<nitf>\n\t<head>\n\t\t<title>' + self.title + '</title>\n')
         out.write('<meta name="robots" content="noindex" />')
-        out.write('<meta name="canonical" content=' + self.guid + ' />')
+        out.write('<meta name="canonical" content="' + self.guid + '" />')
         out.write('\t\t<docdata>\n')
         out.write('\t\t\t<date.release norm="' + self.pubdate + '" />\n\t\t</docdata>\n')
         out.write('\t\t<tobject tobject.type="news">\n\t\t\t<tobject.subject tobject.subject.type="' + str(self.category) + '" />\n')
@@ -219,6 +219,7 @@ for item in items:
     if story.status == 'unpublished':
         story.set_filename()
         story.process_pubdate()
+        story.get_byline()
         story.get_abstract()
         story.capture_photo()
         story.main_content()
