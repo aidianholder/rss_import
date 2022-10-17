@@ -215,12 +215,12 @@ def sendfiles():
 
 
 tree = ET.parse(get_feed(FEED_URL))
-# old_guid_list = get_guids(DBNAME)
+old_guid_list = get_guids(DBNAME)
 items = tree.findall('./channel/item')
 for item in items:
     guid = item.find('guid').text
     story = FeedStory(guid, item)
-    # story.new_or_repeat()
+    story.new_or_repeat()
     if story.status == 'unpublished':
         story.set_filename()
         story.process_pubdate()
@@ -229,5 +229,5 @@ for item in items:
         story.capture_photo()
         story.main_content()
         story.write_xml()
-        # write_guid('feeds.db', story.guid)
-#sendfiles()
+        write_guid('feeds.db', story.guid)
+sendfiles()
