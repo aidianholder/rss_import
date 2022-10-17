@@ -15,7 +15,8 @@ DIR_NAME = os.getcwd()
 DBNAME = 'feeds.db'
 TABLE_NAME = "stories"
 PUNCTUATION = re.compile("[:&',/]")
-
+IFRAMESTART = re.compile('<iframe')
+IFRAMEEND = re.compile('</iframe>')
 
 ns = {
         'dc': "http://purl.org/dc/elements/1.1/",
@@ -79,6 +80,10 @@ class FeedStory:
                  + str(self.lede_photo["height"]) + ' width=' + str(self.lede_photo["width"]) + ' />\n'
             mc = '</media>\n'
             content = content + m + mr + mc
+        istart = IFRAMESTART.search(content)
+        iend = IFRAMEEND.search(content)
+        if istart is not None:
+            content = content[:istart.start()] + content[iend.end():]
         abstract_start = content.find(self.abstract)
         if abstract_start != -1:
             abstract_end = len(self.abstract) + 24
@@ -210,12 +215,12 @@ def sendfiles():
 
 
 tree = ET.parse(get_feed(FEED_URL))
-old_guid_list = get_guids(DBNAME)
+# old_guid_list = get_guids(DBNAME)
 items = tree.findall('./channel/item')
 for item in items:
     guid = item.find('guid').text
     story = FeedStory(guid, item)
-    story.new_or_repeat()
+    # story.new_or_repeat()
     if story.status == 'unpublished':
         story.set_filename()
         story.process_pubdate()
@@ -224,5 +229,5 @@ for item in items:
         story.capture_photo()
         story.main_content()
         story.write_xml()
-        write_guid('feeds.db', story.guid)
-sendfiles()
+        # write_guid('feeds.db', story.guid)
+#sendfiles()
