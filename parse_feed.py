@@ -69,8 +69,11 @@ class FeedStory:
         self.pubdate = pubdate_clean
 
     def get_abstract(self):
-        abstract_raw = self.item.find('description').text
-        self.abstract = html.unescape(abstract_raw)
+        try:
+            abstract_raw = self.item.find('description').text
+            self.abstract = html.unescape(abstract_raw)
+        except:
+            pass
 
     def main_content(self):
         content = html.unescape(self.item.find('content:encoded', ns).text)
@@ -135,7 +138,7 @@ class FeedStory:
         out.write('\t\t\t<date.release norm="' + self.pubdate + '" />\n\t\t</docdata>\n')
         out.write('\t\t<tobject tobject.type="news">\n\t\t\t<tobject.subject tobject.subject.type="' + str(self.category) + '" />\n')
         out.write('\t\t</tobject>\n\t\t\t<pubdata date.publication="' + self.pubdate + '" name="Arkansas Democrat-Gazette" position.section="A" />\n')
-        out.write('\t\t<a rel="canonical" href="' + self.guid + '" />\n')
+        out.write('\t\t<link rel="canonical" href="' + self.guid + '" />\n')
         out.write('\t</head>\n\t<body>\n\t\t<body.head>\n\t\t\t<hedline>\n')
         out.write('\t\t\t\t<hl1>' + self.title + '</hl1>\n')
         out.write('\t\t\t\t<hl2><![CDATA[]]></hl2>\n')
@@ -218,16 +221,19 @@ tree = ET.parse(get_feed(FEED_URL))
 old_guid_list = get_guids(DBNAME)
 items = tree.findall('./channel/item')
 for item in items:
-    guid = item.find('guid').text
-    story = FeedStory(guid, item)
-    story.new_or_repeat()
-    if story.status == 'unpublished':
-        story.set_filename()
-        story.process_pubdate()
-        story.get_byline()
-        story.get_abstract()
-        story.capture_photo()
-        story.main_content()
-        story.write_xml()
-        write_guid('feeds.db', story.guid)
-sendfiles()
+    try:
+        guid = item.find('guid').text
+        story = FeedStory(guid, item)
+        story.new_or_repeat()
+        if story.status == 'unpublished':
+            story.set_filename()
+            story.process_pubdate()
+            story.get_byline()
+            story.get_abstract()
+            story.capture_photo()
+            story.main_content()
+            story.write_xml()
+            write_guid('feeds.db', story.guid)
+    except (TypeError, AttributeError) as errors:
+        print(errors)
+#sendfiles()
