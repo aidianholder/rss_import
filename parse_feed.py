@@ -196,9 +196,9 @@ def sendfiles():
     dir_base = os.getcwd()
     dir_photos = dir_base + '/photos/'
     dir_stories = dir_base + '/stories/'
-    FTP_address = "upload.ellingtoncms.com" #os.getenv("FTPADDRESS")
-    FTP_user = "wehco@wehco" #os.getenv('FTPUSER')
-    FTP_password = "kninQuetHo" #os.getenv('FTPPASSWORD')
+    FTP_address = os.getenv("FTPADDRESS")
+    FTP_user = os.getenv('FTPUSER')
+    FTP_password = os.getenv('FTPPASSWORD')
     with FTP(FTP_address) as ftp:
         ftp.login(user=FTP_user, passwd=FTP_password)
         ftp.cwd('/imports/adg/photos')
