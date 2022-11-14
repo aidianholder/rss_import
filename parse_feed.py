@@ -145,7 +145,7 @@ class FeedStory:
         out.write('\t\t\t</hedline>\n')
         if self.byline is not None:
             out.write('\t\t\t<byline>\n')
-            out.write('\t\t\t\t<byttl>' + self.byline + '</byttl>\n')
+            out.write('\t\t\t\t<byttl>' + self.byline + '/<a href="https://www.si.com">SI.com</a></byttl>\n')
             out.write('\t\t\t</byline>\n')
         out.write('\t\t\t<abstract><![CDATA[' + self.abstract + ']]></abstract>\n')
         out.write('\t\t\t</body.head>\n')
