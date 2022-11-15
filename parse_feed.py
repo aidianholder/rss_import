@@ -57,8 +57,10 @@ class FeedStory:
         old_guids = old_guid_list
         if self.guid not in old_guids:
             self.status = 'unpublished'
+            print('unpublished', self.guid )
         else:
             self.status = 'published'
+            print('published', self.guid)
 
     def process_pubdate(self):
         pubdate_raw = self.item.find('pubDate').text
@@ -145,7 +147,7 @@ class FeedStory:
         out.write('\t\t\t</hedline>\n')
         if self.byline is not None:
             out.write('\t\t\t<byline>\n')
-            out.write('\t\t\t\t<byttl>' + self.byline + '/<a href="https://www.si.com">SI.com</a></byttl>\n')
+            out.write('\t\t\t\t<byttl>' + self.byline + '/SI.com</byttl>\n')
             out.write('\t\t\t</byline>\n')
         out.write('\t\t\t<abstract><![CDATA[' + self.abstract + ']]></abstract>\n')
         out.write('\t\t\t</body.head>\n')
